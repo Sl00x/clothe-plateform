@@ -1,0 +1,55 @@
+version: "3.7"
+
+services:
+  backend:
+    build: ./corsiboat-api
+    environment:
+      ENVIRONMENT: development
+      JWT_SECRET: ${JWT_SECRET}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_DATABASE: ${DB_DATABASE}
+    volumes:
+      - ./backend:/usr/src/app
+    depends_on:
+      - database
+
+  frontend:
+    build: ./corsiboat-app
+    volumes:
+      - ./frontend:/usr/src/app
+    depends_on:
+      - backend
+
+  database:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_DATABASE}
+    volumes:
+      - database:/var/lib/postgresql/data
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8081:8080
+
+  nginx:
+    build: ./nginx
+    restart: always
+    ports:
+      - 8080:80
+    volumes:
+      - ./nginx/proxy.conf:/etc/nginx/conf.d/proxy.conf:ro
+    depends_on:
+      - backend
+      - frontend
+
+volumes:
+  database:
+    driver: local
